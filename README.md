@@ -92,7 +92,7 @@ interface igc3 {
 	send ia-pd 0;
 	. . .
 ```
-> IA-NA Note: The IA-NA is an arbitrary number. A unique number must be chosen for each device connected to the AT&T residential gateway (RG) which will request a prefix delegation from the RG. If only one device will be requesting PDs from the RG (i.e. this pfSense firewall), then "ia-na 0" is fine. 
+> IA-NA Note: The IA-NA is an arbitrary number. A unique number must be chosen for each device connected to the AT&T residential gateway (RG) which will request a prefix delegation from the RG. If only one device will be requesting PDs from the RG (i.e. this OPNsense firewall), then "ia-na 0" is fine. 
 
 ## #3. Update the "ia-pd" declarations
 In the config template from step #1, replace `{YOUR_LAN_INTERFACE}` with the network *port name* for the desired LAN interface.
@@ -124,7 +124,7 @@ The `sla-id` and `sla-len` declarations are always zero (`0`).
 > * Pace 5268AC first assigns F then decrements to 8 to PD 0-7, i.e. PD0 = ::xxxF::/64 
 > * Arris BGW210-700 first assigns 8 then increments to F to PD 0-7, i.e. PD0 = ::xxx8::/64 
 
-## #4. Add the script to pfSense
+## #4. Add the script to OPNsense
 * SSH to OPNsense and edit the file with an editor like vi, or edit on your computer and SCP to OPNsense
 * Create the file as /usr/local/etc/rc.d/att-rg-dhcpv6-pd.conf
 	* Ensure there is no trailing space in the filename.
