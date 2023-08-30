@@ -3,7 +3,7 @@
 #### Known Compatible Versions
 * pfsense (community veresion) - 2.4.5, 2.5.0, 2.6.0
 * pfSense+ - 23.01-RELEASE
-* OPNsense - 21.x, 22.x
+* OPNsense - 21.x, 22.x, 23.7.X
 
 #### Known working residential gateways (RGs)
 * Pace 5268AC
@@ -32,17 +32,13 @@ All credit goes to the user **ttmcmurry** from the [Netgate Forum](https://forum
 
 <br/>
 
-# pfSense/OPNsense Configuration Steps
+# OPNsense Configuration Steps
 
 > **Note:** It is assumed that the `WAN` interface is named "WAN" throughout this guide. If it has a different name in your setup, that is ok. Substitute your `WAN` interface name where applicable throughout this guide.
 
 ## #0. Validate Initial Conditions
 1. The WAN interface IPv6 Configuration type is configured for "none"
-1. The WAN interface IPv6 DHCP6 Client Option "Do not allow PD/Address release" is UNCHECKED 
-	* This checkbox may not be present on some installs
-1. The LAN/OPT interfaces' DHCP6 option is set to "none" 
-1. DHCPv6 Server & RA -> DHCP6 Server -> Disabled 
-1. DHCPv6 Server & RA -> Router Advertisements -> Defaults
+2. The LAN/OPT interfaces' DHCP6 option is set to "none" 
 
 ## #1. Create a local copy of the following config template
 ```
@@ -80,7 +76,7 @@ id-assoc pd 5 { };
 id-assoc pd 6 { };
 id-assoc pd 7 { };
 ``` 
-> **Note:** The `script` declaration in the above configuration may have a different path depending on the setup. For example, some systems may have the script located at `/var/etc/dhcp6c_opt4_script.sh`. Ensure that the correct file is referenced either via SSH or through `Diagnostics -> Edit File`.
+> **Note:** The `script` declaration in the above configuration may have a different path depending on the setup. For example, some systems may have the script located at `/var/etc/dhcp6c_opt4_script.sh`. Ensure that the correct file is referenced via SSH
 
 ## #2. Update the "interface" block on line 1
 In the config template from step #1, replace `{YOUR_WAN_INTERFACE}` with the network *port name* for the WAN interface.
@@ -98,7 +94,7 @@ interface igc3 {
 	send ia-pd 0;
 	. . .
 ```
-> IA-NA Note: The IA-NA is an arbitrary number. A unique number must be chosen for each device connected to the AT&T residential gateway (RG) which will request a prefix 	delegation from the RG. If only one device will be requesting PDs from the RG (i.e. this pfSense firewall), then "ia-na 0" is fine. 
+> IA-NA Note: The IA-NA is an arbitrary number. A unique number must be chosen for each device connected to the AT&T residential gateway (RG) which will request a prefix delegation from the RG. If only one device will be requesting PDs from the RG (i.e. this pfSense firewall), then "ia-na 0" is fine. 
 
 ## #3. Update the "ia-pd" declarations
 In the config template from step #1, replace `{YOUR_LAN_INTERFACE}` with the network *port name* for the desired LAN interface.
@@ -123,7 +119,7 @@ Network ports can be arbitrarily assigned to PDs, staring with `pd 0` and workin
 
 The `sla-id` and `sla-len` declarations are always zero (`0`).
 
-> **Note:** If a particular PD is not desired, it does not need to be declared in the config file. The `send ia-pd` and its respective `id-assoc pd` declaration only needs to be declared if it is going to be used by an interface.
+> **Note:** If a particular PD is not desired, it does not need to be declared in the config file. The `send ia-pd` and its respective `id-assoc pd` declaration only needs to be declared if it is going to be used by an interface. 
 
 > **Note:**  Assigned PDs will result in numerically different networks, depending on the RG.
 >
@@ -131,21 +127,17 @@ The `sla-id` and `sla-len` declarations are always zero (`0`).
 > * Arris BGW210-700 first assigns 8 then increments to F to PD 0-7, i.e. PD0 = ::xxx8::/64 
 
 ## #4. Add the script to pfSense
-* Create this file on pfSense under `Diagnostics -> Edit File`. 
-* In the grey filename box, enter /usr/local/etc/rc.d/att-rg-dhcpv6-pd.conf.
+* SSH to OPNSense and edit the file with an editor like vi, or edit on your computer and SCP to OPNSense
+* Create the file as /usr/local/etc/rc.d/att-rg-dhcpv6-pd.conf
 	* Ensure there is no trailing space in the filename.
 * Copy and paste your edited script into the text window.
-* Click the `Save` button
 
 ## #5. Edit the WAN interface
 1. Navigate to `Interfaces -> WAN`
 1. Set the IPv6 Configuration Type to `DHCP6`
-1. Under the `DHCP6 Client Configuration` section, check the `Advanced Configuration` box
-	* Ensure that the `Configuration Override` checkbox is unchecked during this portion, as having that box checked will hide UI elements that need to be accessed.
-1. Ensure all other check boxes in this section are unchecked.
-1. Set the `DHCPv6 Prefix Delegation size` to `60`
-1. Re-check the `Advanced Configuration` checkbox
-1. Enter the path of the configuration override file from earlier into the `Configuration File Override` text box.
+1. Under the `DHCP6 Client Configuration` section, set the `DHCPv6 Prefix Delegation size` to `60`
+1. Ensure all other check boxes in this section and the Advanced section are unchecked.
+1. Under Config File Override, enter the path of the configuration override file from earlier into the `Configuration File Override` text box. Leave `Use IPV4 connectivity` unchecked and `Use VLAN priority` as Disabled.
 	* i.e., `/usr/local/etc/rc.d/att-rg-dhcpv6-pd.conf `
 1. Click the `Save` button and apply the changes
 
@@ -153,6 +145,7 @@ The `sla-id` and `sla-len` declarations are always zero (`0`).
 1. Under `General Configuration`, set the `IPv6 Configuration Type` to `Track Interface`
 1. Under `Track IPv6 Interface`, set the `IPv6 Interface` to the `WAN` interface name
 1. Set the `IPv6 Prefix ID` to the correlated PD number configured in the configuration file from earlier
+2. Check the `Allow manual adjustment of DHCPv6 and Router Advertisements` box
 1. Click on the `Save` button and apply the changes
 
 **Example:**
@@ -163,8 +156,9 @@ The `sla-id` and `sla-len` declarations are always zero (`0`).
 
 > **Note:** Be sure to use the `id-assoc pd` number associated with the respective network port for the `IPv6 Prefix ID`.
 
-## #7. Enable pfSense DHCPv6 Server
-Navigate to `Services -> DHCPv6 Server & RA`
+## #7. Enable OPNsense DHCPv6 Server
+Navigate to `Services -> DHCPv6` and click on the LAN interface you want to enable it on
+> **Note:** If you have Google devices in this LAN, you can use SLAAC and keep the DHCPv6 server off.
 
 #### Perform the following actions for each interface:
 * Within the `DHCPv6 Server` tab
@@ -179,7 +173,19 @@ Navigate to `Services -> DHCPv6 Server & RA`
 		* Set the `Router Mode` to `Managed`
 	* Click the `Save` button
 
-> **Note:** After applying these settings, it may take several minutes for IPv6 addresses to start populating approprately. 
+> **Note:** After applying these settings, it may take several minutes for IPv6 addresses to start populating approprately.
+
+#### If you are using SLAAC for Google compatibility, but want to assign your own IPv6 DNS server (ie for PiHole or AdGuard Home)
+
+1. Keep DHCPv6 disabled for the LAN interface
+2. Navigate to `Services -> Router Advertisements`
+3. Click on each LAN interface
+4. Set `Router Advertisements` to Unmanaged
+5. Add your DNS Server IPv6 address
+6. Click `Save`
+
+> **Note:** Your DNS server can be configured as static using the prefix that belongs to the LAN interface it is connected to. Others have said you can also use the local-link fe80 address which should never change. I assigned a static IP
+
 
 If all has gone well, IPv6 should now be working.
 
