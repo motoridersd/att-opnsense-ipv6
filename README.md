@@ -1,4 +1,4 @@
-# Multiple IPv6 Prefix Delegation over AT&amp;T Residential Gateway for opnSense
+# Multiple IPv6 Prefix Delegation over AT&amp;T Residential Gateway for OPNsense
 
 #### Known Compatible Versions
 * OPNsense - 21.x, 22.x, 23.7.X
