@@ -1,8 +1,6 @@
-# Multiple IPv6 Prefix Delegation over AT&amp;T Residential Gateway for pfSense/opnSense
+# Multiple IPv6 Prefix Delegation over AT&amp;T Residential Gateway for opnSense
 
 #### Known Compatible Versions
-* pfsense (community veresion) - 2.4.5, 2.5.0, 2.6.0
-* pfSense+ - 23.01-RELEASE
 * OPNsense - 21.x, 22.x, 23.7.X
 
 #### Known working residential gateways (RGs)
@@ -127,7 +125,7 @@ The `sla-id` and `sla-len` declarations are always zero (`0`).
 > * Arris BGW210-700 first assigns 8 then increments to F to PD 0-7, i.e. PD0 = ::xxx8::/64 
 
 ## #4. Add the script to pfSense
-* SSH to OPNSense and edit the file with an editor like vi, or edit on your computer and SCP to OPNSense
+* SSH to OPNsense and edit the file with an editor like vi, or edit on your computer and SCP to OPNsense
 * Create the file as /usr/local/etc/rc.d/att-rg-dhcpv6-pd.conf
 	* Ensure there is no trailing space in the filename.
 * Copy and paste your edited script into the text window.
